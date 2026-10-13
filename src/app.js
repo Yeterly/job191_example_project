@@ -12,6 +12,14 @@ function readJson(request) {
   });
 }
 
+const UNIVERSITY_DOMAIN = "stu.istinye.edu.tr";
+
+/** True for an address whose domain is exactly the university's, in any letter case. */
+export function isUniversityEmail(email) {
+  const at = email.lastIndexOf("@");
+  return at > 0 && email.slice(at + 1).toLowerCase() === UNIVERSITY_DOMAIN;
+}
+
 function sendJson(response, status, payload, headers = {}) {
   response.writeHead(status, { "Content-Type": "application/json", ...headers });
   response.end(JSON.stringify(payload));
@@ -28,6 +36,11 @@ export function createApp({ users = new Map() } = {}) {
     const email = typeof body?.email === "string" ? body.email.trim() : "";
     if (!email.includes("@")) {
       sendJson(response, 400, { error: "Enter an email address" });
+      return;
+    }
+    // US-1-T-1: only university addresses may sign in; checked before any user lookup.
+    if (!isUniversityEmail(email)) {
+      sendJson(response, 400, { error: "Use your university email" });
       return;
     }
     const key = email.toLowerCase();
