@@ -1,0 +1,14 @@
+{
+  "name": "job191-example-project",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Example team project for Job191 sprint tasks.",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
