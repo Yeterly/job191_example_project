@@ -11,6 +11,7 @@ export async function startApp() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     }),
+    me: (cookie) => fetch(`${base}/api/me`, { headers: cookie ? { Cookie: cookie } : {} }),
     close: () => new Promise((resolve) => server.close(resolve)),
   };
 }

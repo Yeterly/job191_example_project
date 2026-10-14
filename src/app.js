@@ -25,9 +25,26 @@ function sendJson(response, status, payload, headers = {}) {
   response.end(JSON.stringify(payload));
 }
 
-/** The app: POST /api/login signs a user in by email and sets a session cookie. */
+/** The session id from the request's `session` cookie, or null. */
+function sessionIdOf(request) {
+  const match = /(?:^|;\s*)session=([^;]+)/.exec(request.headers.cookie ?? "");
+  return match ? match[1] : null;
+}
+
+/**
+ * The app: POST /api/login signs a user in by email and sets a session cookie;
+ * GET /api/me returns the email that session belongs to.
+ */
 export function createApp({ users = new Map() } = {}) {
+  // US-1-T-2: session id -> signed-in email, in memory only.
+  const sessions = new Map();
   return createServer(async (request, response) => {
+    if (request.method === "GET" && request.url === "/api/me") {
+      const email = sessions.get(sessionIdOf(request));
+      if (!email) sendJson(response, 401, { error: "Not signed in" });
+      else sendJson(response, 200, { email });
+      return;
+    }
     if (request.method !== "POST" || request.url !== "/api/login") {
       sendJson(response, 404, { error: "Not found" });
       return;
@@ -46,6 +63,7 @@ export function createApp({ users = new Map() } = {}) {
     const key = email.toLowerCase();
     if (!users.has(key)) users.set(key, { email: key });
     const session = randomUUID();
+    sessions.set(session, key);
     sendJson(response, 200, { email: key }, { "Set-Cookie": `session=${session}; HttpOnly; Path=/; SameSite=Lax` });
   });
 }
